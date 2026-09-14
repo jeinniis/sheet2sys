@@ -1,0 +1,85 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+---
+
+<BaseLayout title="ค้นหา" description="ค้นหาของในคลัง sheet2sys">
+  <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'ค้นหา' }]} />
+  <h1>ค้นหา</h1>
+
+  <form class="search-form" id="search-form" role="search">
+    <input
+      class="input"
+      type="search"
+      name="q"
+      id="search-input"
+      placeholder="พิมพ์คำที่ต้องการค้นหา เช่น named range, apps script"
+      autocomplete="off"
+      autofocus
+    />
+    <button class="btn" type="button" id="search-clear">ล้าง</button>
+  </form>
+
+  <p class="meta" id="search-status" style="margin-top: 1rem;"></p>
+  <ul class="list" id="search-results" style="margin-top: 0.5rem;"></ul>
+</BaseLayout>
+
+<script>
+  type Entry = { title: string; url: string; category: string; tags: string[] };
+
+  const input = document.getElementById('search-input') as HTMLInputElement;
+  const clearBtn = document.getElementById('search-clear') as HTMLButtonElement;
+  const status = document.getElementById('search-status') as HTMLElement;
+  const results = document.getElementById('search-results') as HTMLUListElement;
+
+  const initialQuery = new URLSearchParams(location.search).get('q');
+  if (initialQuery) input.value = initialQuery;
+
+  let index: Entry[] = [];
+
+  fetch('/search-index.json')
+    .then((res) => res.json())
+    .then((data: Entry[]) => {
+      index = data;
+      render(input.value);
+    });
+
+  function render(query: string) {
+    const q = query.trim().toLowerCase();
+    results.innerHTML = '';
+
+    if (!q) {
+      status.textContent = index.length > 0 ? `ทั้งหมด ${index.length} ชิ้นในคลัง` : '';
+      return;
+    }
+
+    const matches = index.filter(
+      (e) =>
+        e.title.toLowerCase().includes(q) ||
+        e.tags.some((t) => t.toLowerCase().includes(q)) ||
+        e.category.toLowerCase().includes(q)
+    );
+
+    status.textContent = matches.length === 0 ? `ไม่พบผลลัพธ์สำหรับ "${query}"` : `พบ ${matches.length} รายการ`;
+
+    for (const entry of matches) {
+      const li = document.createElement('li');
+      li.className = 'list-row';
+      li.innerHTML = `<a href="${entry.url}">
+        <div class="list-row-title"></div>
+        <div class="list-row-meta"><span></span></div>
+      </a>`;
+      li.querySelector('.list-row-title')!.textContent = entry.title;
+      li.querySelector('.list-row-meta span')!.textContent = entry.category;
+      results.appendChild(li);
+    }
+  }
+
+  input.addEventListener('input', () => render(input.value));
+  clearBtn.addEventListener('click', () => {
+    input.value = '';
+    input.focus();
+    render('');
+  });
+  document.getElementById('search-form')!.addEventListener('submit', (e) => e.preventDefault());
+</script>

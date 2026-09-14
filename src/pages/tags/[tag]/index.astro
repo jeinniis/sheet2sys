@@ -1,0 +1,40 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import { getCategory } from '../../../lib/categories.js';
+import { groupByTag } from '../../../lib/tags.js';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('library', ({ data }) => !data.draft);
+  const byTag = groupByTag(entries);
+  return [...byTag.keys()].map((tag) => ({ params: { tag } }));
+}
+
+const { tag } = Astro.params;
+const entries = (await getCollection('library', ({ data }) => !data.draft))
+  .filter((e) => e.data.tags.includes(tag))
+  .sort((a, b) => b.data.updated.valueOf() - a.data.updated.valueOf());
+---
+
+<BaseLayout title={`#${tag}`} description={`ของในคลังที่ติดแท็ก ${tag}`}>
+  <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'แท็ก', href: '/tags/' }, { label: tag }]} />
+  <h1>#{tag}</h1>
+
+  <ul class="list">
+    {entries.map((entry) => {
+      const slug = entry.id.split('/').pop();
+      const category = getCategory(entry.data.category);
+      return (
+        <li class="list-row">
+          <a href={`/${entry.data.category}/${slug}/`}>
+            <div class="list-row-title">{entry.data.title}</div>
+            <div class="list-row-meta">
+              <span>{category?.icon} {category?.label}</span>
+            </div>
+          </a>
+        </li>
+      );
+    })}
+  </ul>
+</BaseLayout>

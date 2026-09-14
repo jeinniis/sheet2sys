@@ -1,20 +1,71 @@
 ---
+import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { CATEGORIES } from '../lib/categories.js';
+import { CATEGORIES, getCategory } from '../lib/categories.js';
+
+const recent = (await getCollection('library', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.updated.valueOf() - a.data.updated.valueOf())
+  .slice(0, 6);
 ---
 
 <BaseLayout title="sheet2sys">
-  <h1>sheet2sys</h1>
-  <p class="meta">
-    คลังความรู้สาธารณะของ Jane ที่บันทึกสิ่งที่เรียนรู้จากการสร้างระบบงานจริงด้วยตัวเอง
-  </p>
+  <section class="section" style="margin-top:0;">
+    <h1>sheet2sys</h1>
+    <p class="lede">
+      คลังความรู้สาธารณะของ Jane ที่บันทึกสิ่งที่เรียนรู้จากการสร้างระบบงานจริงด้วยตัวเอง
+      โดยไม่ได้เริ่มจากการเป็นโปรแกรมเมอร์
+    </p>
+    <form class="search-form" action="/search/" style="max-width: 32rem; margin-top: 1.5rem;">
+      <input class="input" type="search" name="q" placeholder="ค้นหาของในคลัง เช่น named range" />
+      <button class="btn" type="submit">ค้นหา</button>
+    </form>
+  </section>
 
-  <ul class="card-list">
-    {CATEGORIES.map((c) => (
-      <li>
-        <a href={`/${c.slug}/`}>{c.label}</a>
-        <p class="meta">{c.description}</p>
-      </li>
-    ))}
-  </ul>
+  <section class="section">
+    <div class="section-heading">
+      <h2>หมวดหมู่</h2>
+    </div>
+    <ul class="category-grid">
+      {CATEGORIES.map((c) => (
+        <li>
+          <a class="category-tile" href={`/${c.slug}/`}>
+            <span class="icon" aria-hidden="true">{c.icon}</span>
+            <h3>{c.label}</h3>
+            <p>{c.description}</p>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  {recent.length > 0 && (
+    <section class="section">
+      <div class="section-heading">
+        <h2>อัปเดตล่าสุด</h2>
+        <a href="/tags/">ดูตามแท็ก</a>
+      </div>
+      <ul class="list">
+        {recent.map((entry) => {
+          const slug = entry.id.split('/').pop();
+          const category = getCategory(entry.data.category);
+          const updated = new Intl.DateTimeFormat('th-TH', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+          }).format(entry.data.updated);
+          return (
+            <li class="list-row">
+              <a href={`/${entry.data.category}/${slug}/`}>
+                <div class="list-row-title">{entry.data.title}</div>
+                <div class="list-row-meta">
+                  <span>{category?.icon} {category?.label}</span>
+                  <span>อัปเดต {updated}</span>
+                </div>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  )}
 </BaseLayout>
