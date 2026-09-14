@@ -10,7 +10,7 @@ interface Props {
 }
 
 const { title, description, wide = false } = Astro.props;
-const pageTitle = title === 'sheet2sys' ? title : `${title} — sheet2sys`;
+const pageTitle = title === 'DotStack' ? title : `${title} — DotStack`;
 
 const path = Astro.url.pathname;
 const isActive = (href: string) => path === href || path.startsWith(href);
@@ -34,7 +34,7 @@ const isActive = (href: string) => path === href || path.startsWith(href);
   <body>
     <header class="site">
       <div class="nav">
-        <a class="brand" href="/">sheet2sys</a>
+        <a class="brand" href="/">DotStack</a>
         <div class="nav-links">
           <details class="nav-dropdown">
             <summary>หมวดหมู่</summary>
@@ -58,7 +58,7 @@ const isActive = (href: string) => path === href || path.startsWith(href);
     </main>
     <footer class="site">
       <div class="wrap">
-        <span>© {new Date().getFullYear()} Jane — sheet2sys</span>
+        <span>© {new Date().getFullYear()} Jane — DotStack</span>
         <a href="/about/">About</a>
       </div>
     </footer>

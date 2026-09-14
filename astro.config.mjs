@@ -5,7 +5,8 @@ import { remarkWikilinks } from './src/lib/remark-wikilinks.js';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://sheet2sys.com',
+  // Placeholder — dotstack.com is not secured yet (see ADR 0012).
+  site: 'https://dotstack.com',
   markdown: {
     processor: unified({ remarkPlugins: [remarkWikilinks] }),
   },

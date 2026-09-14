@@ -6,4 +6,4 @@ Single-context project — one domain, no bounded-context split.
   Draft, Diagram, Category, Tag, Backlink, Author) and the fixed six
   categories.
 - `docs/adr/000N-title.md` holds Architecture Decision Records, numbered
-  sequentially starting at `0001`. Next available number: `0012`.
+  sequentially starting at `0001`. Next available number: `0013`.
