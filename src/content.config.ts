@@ -9,6 +9,10 @@ const library = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/library' }),
   schema: z.object({
     title: z.string(),
+    // One line shown in list/search views (homepage "recently updated",
+    // /tags/, /search) so readers can tell entries apart without opening
+    // each one. Optional so existing pieces don't need a schema migration.
+    description: z.string().optional(),
     type: z.enum(['note', 'case']),
     category: z.enum(CATEGORY_SLUGS),
     tags: z.array(z.string()).default([]),

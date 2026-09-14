@@ -1,5 +1,6 @@
 ---
 title: "Apps Script Trigger สามแบบที่ต้องรู้ก่อนเขียนระบบอัตโนมัติ"
+description: "simple, installable, และ time-driven trigger ต่างกันตรงไหน แล้วทำไม onEdit ถึงเรียก service บางตัวไม่ได้"
 type: note
 category: spreadsheet-automation
 tags: [google-sheets, apps-script]

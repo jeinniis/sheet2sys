@@ -1,5 +1,6 @@
 ---
 title: "Named Range ทำไมสูตรถึงไม่พังเวลาแทรกแถว"
+description: "ตั้งชื่อช่วงเซลล์แทนการอ้างตำแหน่งตรงๆ สูตรจะขยับตามอัตโนมัติเวลาแทรกหรือลบแถว"
 type: note
 category: spreadsheet-automation
 tags: [google-sheets]

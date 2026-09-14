@@ -10,6 +10,7 @@
 ```yaml
 ---
 title: "ชื่อของ"
+description: "หนึ่งประโยคสรุปเนื้อหา" # optional — โชว์ในหน้าแรก, /tags/, /search/
 type: note # หรือ case (ADR 0003)
 category: spreadsheet-automation # หนึ่งใน 6 หมวดที่ src/lib/categories.js กำหนดไว้ (ADR 0008)
 tags: [google-sheets, apps-script] # อิสระ ไม่จำกัด
@@ -17,6 +18,9 @@ updated: 2026-09-14 # แสดงเป็น "อัปเดตล่าส�
 draft: false # optional, default false — ดู ADR 0011 ก่อนพึ่งพา flag นี้
 ---
 ```
+
+`description` เป็น optional แต่ควรใส่ทุกครั้งถ้าเป็นไปได้ — หน้าแรกกับหน้า tag ใช้มันโชว์
+ใต้ชื่อของแต่ละชิ้นเพื่อให้ผู้อ่านแยกของออกจากกันได้โดยไม่ต้องเปิดเข้าไปดู
 
 ## ลิงก์ข้ามของ ([[wikilink]])
 

@@ -3,35 +3,57 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { CATEGORIES, getCategory } from '../lib/categories.js';
 
-const recent = (await getCollection('library', ({ data }) => !data.draft))
+const allEntries = await getCollection('library', ({ data }) => !data.draft);
+
+const counts = allEntries.reduce((acc, entry) => {
+  acc[entry.data.category] = (acc[entry.data.category] ?? 0) + 1;
+  return acc;
+}, {});
+
+const recent = [...allEntries]
   .sort((a, b) => b.data.updated.valueOf() - a.data.updated.valueOf())
   .slice(0, 6);
 ---
 
-<BaseLayout title="sheet2sys">
-  <section class="section" style="margin-top:0;">
-    <h1>sheet2sys</h1>
-    <p class="lede">
+<BaseLayout title="sheet2sys" wide>
+  <section class="section-lg">
+    <h1 class="hero-title">sheet2sys</h1>
+    <p class="hero-lede">
       คลังความรู้สาธารณะของ Jane ที่บันทึกสิ่งที่เรียนรู้จากการสร้างระบบงานจริงด้วยตัวเอง
       โดยไม่ได้เริ่มจากการเป็นโปรแกรมเมอร์
     </p>
-    <form class="search-form" action="/search/" style="max-width: 32rem; margin-top: 1.5rem;">
-      <input class="input" type="search" name="q" placeholder="ค้นหาของในคลัง เช่น named range" />
-      <button class="btn" type="submit">ค้นหา</button>
+
+    <form class="search-form search-hero" action="/search/" style="margin-top: 1.75rem;">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+      <input
+        class="input"
+        type="search"
+        name="q"
+        id="home-search"
+        placeholder="ค้นหาเรื่องที่อยากรู้ เช่น Named Range, Apps Script, Automation..."
+        autocomplete="off"
+      />
+      <kbd class="kbd" id="home-search-kbd">⌘K</kbd>
     </form>
   </section>
 
-  <section class="section">
+  <section class="section-lg">
     <div class="section-heading">
       <h2>หมวดหมู่</h2>
     </div>
-    <ul class="category-grid">
+    <ul class="category-list">
       {CATEGORIES.map((c) => (
         <li>
-          <a class="category-tile" href={`/${c.slug}/`}>
-            <span class="icon" aria-hidden="true">{c.icon}</span>
-            <h3>{c.label}</h3>
-            <p>{c.description}</p>
+          <a class="category-row" href={`/${c.slug}/`}>
+            <svg class="cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" set:html={c.icon} />
+            <div class="category-row-body">
+              <div class="category-row-title">{c.label}</div>
+              <p class="category-row-desc">{c.description}</p>
+            </div>
+            <span class="category-row-count">{counts[c.slug] ?? 0} ชิ้น</span>
           </a>
         </li>
       ))}
@@ -39,7 +61,7 @@ const recent = (await getCollection('library', ({ data }) => !data.draft))
   </section>
 
   {recent.length > 0 && (
-    <section class="section">
+    <section class="section-lg">
       <div class="section-heading">
         <h2>อัปเดตล่าสุด</h2>
         <a href="/tags/">ดูตามแท็ก</a>
@@ -57,8 +79,9 @@ const recent = (await getCollection('library', ({ data }) => !data.draft))
             <li class="list-row">
               <a href={`/${entry.data.category}/${slug}/`}>
                 <div class="list-row-title">{entry.data.title}</div>
+                {entry.data.description && <p class="list-row-desc">{entry.data.description}</p>}
                 <div class="list-row-meta">
-                  <span>{category?.icon} {category?.label}</span>
+                  <span>{category?.label}</span>
                   <span>อัปเดต {updated}</span>
                 </div>
               </a>
@@ -69,3 +92,18 @@ const recent = (await getCollection('library', ({ data }) => !data.draft))
     </section>
   )}
 </BaseLayout>
+
+<script>
+  // Homepage-only enhancement: ⌘K/Ctrl+K jumps focus to the search field.
+  // Every other page stays free of JS.
+  const input = document.getElementById('home-search') as HTMLInputElement | null;
+  if (input) {
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        input.focus();
+        input.select();
+      }
+    });
+  }
+</script>
