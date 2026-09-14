@@ -1,0 +1,36 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { CATEGORIES, getCategory } from '../../lib/categories.js';
+
+export async function getStaticPaths() {
+  return CATEGORIES.map((c) => ({ params: { category: c.slug } }));
+}
+
+const { category: categorySlug } = Astro.params;
+const category = getCategory(categorySlug);
+
+const entries = (await getCollection('library', ({ data }) => !data.draft))
+  .filter((e) => e.data.category === categorySlug)
+  .sort((a, b) => b.data.updated.valueOf() - a.data.updated.valueOf());
+---
+
+<BaseLayout title={category?.label ?? categorySlug} description={category?.description}>
+  <h1>{category?.label}</h1>
+  <p class="meta">{category?.description}</p>
+
+  {entries.length === 0 ? (
+    <p class="meta">ยังไม่มีของในหมวดนี้</p>
+  ) : (
+    <ul class="card-list">
+      {entries.map((entry) => {
+        const slug = entry.id.split('/').pop();
+        return (
+          <li>
+            <a href={`/${categorySlug}/${slug}/`}>{entry.data.title}</a>
+          </li>
+        );
+      })}
+    </ul>
+  )}
+</BaseLayout>

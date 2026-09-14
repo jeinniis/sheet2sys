@@ -1,0 +1,24 @@
+---
+import { getCollection, render } from 'astro:content';
+import EntryLayout from '../../layouts/EntryLayout.astro';
+import { getBacklinks } from '../../lib/content-graph.js';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('library', ({ data }) => !data.draft);
+  return entries.map((entry) => {
+    const slug = entry.id.split('/').pop();
+    return {
+      params: { category: entry.data.category, slug },
+      props: { entry, slug },
+    };
+  });
+}
+
+const { entry, slug } = Astro.props;
+const { Content } = await render(entry);
+const backlinks = getBacklinks(slug);
+---
+
+<EntryLayout data={entry.data} backlinks={backlinks}>
+  <Content />
+</EntryLayout>

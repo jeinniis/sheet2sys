@@ -1,0 +1,51 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import { getCategory } from '../lib/categories.js';
+
+interface Props {
+  data: {
+    title: string;
+    type: 'note' | 'case';
+    category: string;
+    tags: string[];
+    updated: Date;
+  };
+  backlinks: { slug: string; title: string; url: string }[];
+}
+
+const { data, backlinks } = Astro.props;
+const category = getCategory(data.category);
+const updatedLabel = new Intl.DateTimeFormat('th-TH', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+}).format(data.updated);
+---
+
+<BaseLayout title={data.title}>
+  <article>
+    <p>
+      <a class="category-badge" href={`/${data.category}/`}>{category?.label}</a>
+      {data.type === 'case' && <span class="category-badge">Case</span>}
+    </p>
+    <h1>{data.title}</h1>
+    <p class="meta">อัปเดตล่าสุด {updatedLabel}</p>
+    {data.tags.length > 0 && (
+      <p class="tags">
+        {data.tags.map((tag) => <span class="tag">{tag}</span>)}
+      </p>
+    )}
+    <slot />
+  </article>
+
+  {backlinks.length > 0 && (
+    <section class="backlinks">
+      <h2>ของที่ลิงก์มาที่นี่</h2>
+      <ul class="card-list">
+        {backlinks.map((b) => (
+          <li><a href={b.url}>{b.title}</a></li>
+        ))}
+      </ul>
+    </section>
+  )}
+</BaseLayout>

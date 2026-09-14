@@ -1,0 +1,20 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { CATEGORIES } from '../lib/categories.js';
+---
+
+<BaseLayout title="sheet2sys">
+  <h1>sheet2sys</h1>
+  <p class="meta">
+    คลังความรู้สาธารณะของ Jane ที่บันทึกสิ่งที่เรียนรู้จากการสร้างระบบงานจริงด้วยตัวเอง
+  </p>
+
+  <ul class="card-list">
+    {CATEGORIES.map((c) => (
+      <li>
+        <a href={`/${c.slug}/`}>{c.label}</a>
+        <p class="meta">{c.description}</p>
+      </li>
+    ))}
+  </ul>
+</BaseLayout>
