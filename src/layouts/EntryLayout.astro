@@ -1,6 +1,7 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
+import CategoryIcon from '../components/CategoryIcon.astro';
 import { getCategory } from '../lib/categories.js';
 
 interface Props {
@@ -34,7 +35,10 @@ const updatedLabel = new Intl.DateTimeFormat('th-TH', {
 
   <article>
     <p>
-      <a class="badge" href={`/${data.category}/`}>{category?.icon} {category?.label}</a>
+      <a class="badge" href={`/${data.category}/`}>
+        <CategoryIcon icon={category?.icon ?? ''} size={14} />
+        {category?.label}
+      </a>
       {data.type === 'case' && <span class="badge badge-accent">Case</span>}
     </p>
     <h1>{data.title}</h1>

@@ -1,20 +1,44 @@
 /* ============================================================
-   Design tokens
+   Design tokens — sheet2sys brand system
+   One fixed dark identity (not a prefers-color-scheme toggle):
+     Graphite   background
+     White      primary text / titles
+     Gray       secondary text / metadata
+     Yellow     identity & attention (sparingly)
+     Blue       interaction & navigation
+   Rule: yellow = attention, blue = interaction. Never both heavily
+   in the same component.
    ============================================================ */
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
+
+  /* Brand colors */
+  --graphite: #191b1c;
+  --white: #fafaf7;
+  --gray: #8c9196;
+  --yellow: #ffd43b;
+  --blue: #4263eb;
 
   /* Color roles */
-  --color-bg: #ffffff;
-  --color-surface: #f7f6f4;
-  --color-border: #e4e2dd;
-  --color-border-strong: #cfccc5;
-  --color-text: #1f1e1c;
-  --color-text-body: #38352f;
-  --color-text-muted: #6e6a62;
-  --color-text-faint: #948f85;
-  --color-accent: #b1592f;
-  --color-accent-contrast: #ffffff;
+  --color-bg: var(--graphite);
+  /* Surfaces/borders are derived steps up from Graphite — not part of the
+     named brand palette, but needed for hairline structure. */
+  --color-surface: #212325;
+  --color-border: #2b2e30;
+  --color-border-strong: #3c3f42;
+
+  --color-text: var(--white);
+  --color-text-muted: var(--gray);
+  --color-text-faint: #6b6f73;
+
+  /* Blue at brand strength (#4263EB) is only ~3.5:1 on Graphite — short of
+     AA for text. Use the brand blue for larger/non-text accents; use this
+     lightened tint (~4.7:1) for actual link/tag text. */
+  --color-link: #6c86f7;
+  --color-link-strong: var(--blue);
+
+  --color-accent: var(--yellow);
+  --color-on-accent: var(--graphite);
 
   /* Spacing scale (4px base) */
   --space-1: 0.25rem;
@@ -27,43 +51,22 @@
   --space-8: 4rem;
   --space-9: 5rem;
 
-  /* Type scale */
+  /* Type scale — hero kept modest on purpose (no huge marketing type) */
   --text-xs: 0.8125rem;
   --text-sm: 0.9rem;
   --text-base: 1rem;
   --text-lg: 1.125rem;
   --text-xl: 1.375rem;
   --text-2xl: 1.75rem;
-  --text-3xl: 2.5rem;
+  --text-3xl: 2.125rem;
 
-  /* Radius — used moderately, not on every element */
   --radius-sm: 6px;
   --radius-md: 10px;
 
-  /* Shadow — reserved for hover/elevation, not decoration */
-  --shadow-sm: 0 1px 2px rgba(20, 18, 14, 0.05), 0 1px 1px rgba(20, 18, 14, 0.04);
+  --transition: 170ms ease;
 
-  /* Comfortable reading width vs. the wider page container used for
-     layout/structure (category grids, list rows) — see the redesign
-     note: widen the container, not the paragraphs. */
   --content-width: 42rem;
   --page-width: 68.75rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #171614;
-    --color-surface: #1f1e1b;
-    --color-border: #322f2a;
-    --color-border-strong: #46423a;
-    --color-text: #f2efe9;
-    --color-text-body: #d9d4c9;
-    --color-text-muted: #a29c8f;
-    --color-text-faint: #7d786d;
-    --color-accent: #e2895c;
-    --color-accent-contrast: #171614;
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  }
 }
 
 /* ============================================================
@@ -80,7 +83,7 @@ html {
 body {
   margin: 0;
   background: var(--color-bg);
-  color: var(--color-text-body);
+  color: var(--color-text);
   font-family: 'Noto Sans Thai', system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: var(--text-base);
   line-height: 1.7;
@@ -113,9 +116,12 @@ p {
 }
 
 a {
-  color: var(--color-accent);
+  color: var(--color-link);
+  transition: color var(--transition);
 }
 
+/* Yellow = attention, used consistently for the one moment every
+   interactive element needs it: showing where focus is. */
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
@@ -150,9 +156,6 @@ summary:focus-visible {
   border-top: 1px solid var(--color-border);
 }
 
-/* Wider gap between major homepage blocks (Hero / Search / Categories /
-   Latest) — content inside each section stays on the tighter --space-3/4
-   rhythm so grouping still reads clearly. */
 .section-lg {
   margin-top: var(--space-9);
 }
@@ -171,17 +174,20 @@ summary:focus-visible {
 
 .section-heading h2 {
   margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
 }
 
 .section-heading a {
   font-size: var(--text-sm);
-  color: var(--color-text-muted);
+  color: var(--color-link);
   text-decoration: none;
-  white-space: nowrap;
 }
 
 .section-heading a:hover {
-  color: var(--color-accent);
   text-decoration: underline;
 }
 
@@ -208,7 +214,7 @@ header.site .nav {
 .brand {
   font-weight: 700;
   font-size: var(--text-lg);
-  color: var(--color-text);
+  color: var(--color-accent);
   text-decoration: none;
   margin-right: auto;
 }
@@ -221,12 +227,30 @@ header.site .nav {
 }
 
 .nav-links a {
+  position: relative;
   color: var(--color-text-muted);
   text-decoration: none;
+  padding-bottom: 2px;
 }
 
 .nav-links a:hover {
+  color: var(--color-link);
+}
+
+/* Active nav — a small identity marker (yellow) showing where you are,
+   distinct from the blue hover that means "click me". */
+.nav-links a[data-active='true'] {
   color: var(--color-text);
+}
+
+.nav-links a[data-active='true']::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -3px;
+  height: 2px;
+  background: var(--color-accent);
 }
 
 .nav-dropdown {
@@ -247,7 +271,7 @@ header.site .nav {
 }
 
 .nav-dropdown summary:hover {
-  color: var(--color-text);
+  color: var(--color-link);
 }
 
 .nav-dropdown summary::after {
@@ -263,10 +287,9 @@ header.site .nav {
   position: absolute;
   top: calc(100% + var(--space-2));
   left: 0;
-  background: var(--color-bg);
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
   padding: var(--space-2);
   min-width: 13rem;
   display: flex;
@@ -285,7 +308,8 @@ header.site .nav {
 }
 
 .nav-dropdown-menu a:hover {
-  background: var(--color-surface);
+  background: var(--color-bg);
+  color: var(--color-link);
 }
 
 /* ============================================================
@@ -296,7 +320,7 @@ header.site .nav {
   flex-wrap: wrap;
   gap: var(--space-2);
   font-size: var(--text-sm);
-  color: var(--color-text-muted);
+  color: var(--color-text-faint);
   margin-bottom: var(--space-5);
 }
 
@@ -306,11 +330,11 @@ header.site .nav {
 }
 
 .breadcrumbs a:hover {
-  color: var(--color-accent);
+  color: var(--color-link);
 }
 
 .breadcrumbs .sep {
-  color: var(--color-border-strong);
+  color: var(--color-text-faint);
 }
 
 .breadcrumbs .current {
@@ -318,19 +342,18 @@ header.site .nav {
 }
 
 /* ============================================================
-   Hero (homepage)
+   Hero (homepage) — a compact brand block, not a marketing hero
    ============================================================ */
 .hero-title {
   font-size: var(--text-3xl);
   letter-spacing: -0.01em;
-  margin-bottom: var(--space-3);
+  color: var(--color-accent);
+  margin-bottom: var(--space-2);
 }
 
-.hero-lede {
+.hero-tagline {
   color: var(--color-text-muted);
-  font-size: var(--text-lg);
-  line-height: 1.6;
-  max-width: 40rem;
+  font-size: var(--text-base);
   margin-bottom: 0;
 }
 
@@ -371,13 +394,16 @@ header.site .nav {
   border-radius: var(--radius-sm);
   padding: 0.2rem 0.55rem;
   text-decoration: none;
+  transition: border-color var(--transition), color var(--transition);
 }
 
+/* Category badge is a navigation affordance -> interaction color */
 .badge:hover {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
+  border-color: var(--color-link);
+  color: var(--color-link);
 }
 
+/* "Case" badge is a highlight, not a navigation action -> identity color */
 .badge-accent {
   color: var(--color-accent);
   border-color: var(--color-accent);
@@ -391,19 +417,21 @@ header.site .nav {
 
 .tag-link {
   font-size: var(--text-xs);
-  color: var(--color-text-muted);
+  color: var(--color-link);
   text-decoration: none;
   background: var(--color-surface);
   border-radius: var(--radius-sm);
   padding: 0.2rem 0.55rem;
+  transition: background var(--transition);
 }
 
 .tag-link::before {
   content: '#';
+  color: var(--color-text-faint);
 }
 
 .tag-link:hover {
-  color: var(--color-accent);
+  background: var(--color-border);
 }
 
 /* ============================================================
@@ -419,16 +447,17 @@ header.site .nav {
   border-radius: var(--radius-sm);
   padding: 0.55rem 1rem;
   border: 1px solid var(--color-border-strong);
-  background: var(--color-bg);
+  background: transparent;
   color: var(--color-text);
   cursor: pointer;
   text-decoration: none;
   line-height: 1.2;
+  transition: border-color var(--transition), color var(--transition);
 }
 
 .btn:hover {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
+  border-color: var(--color-link);
+  color: var(--color-link);
 }
 
 .input {
@@ -436,10 +465,11 @@ header.site .nav {
   font: inherit;
   font-size: var(--text-base);
   color: var(--color-text);
-  background: var(--color-bg);
+  background: var(--color-surface);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md);
   padding: 0.7rem 0.9rem;
+  transition: border-color var(--transition);
 }
 
 .input::placeholder {
@@ -447,7 +477,7 @@ header.site .nav {
 }
 
 .input:focus {
-  border-color: var(--color-accent);
+  border-color: var(--color-text-muted);
 }
 
 .search-form {
@@ -458,7 +488,7 @@ header.site .nav {
 /* Prominent search — homepage hero */
 .search-hero {
   position: relative;
-  max-width: 36rem;
+  max-width: 38rem;
 }
 
 .search-hero .search-icon {
@@ -472,7 +502,7 @@ header.site .nav {
 
 .search-hero .input {
   font-size: var(--text-lg);
-  padding: 0.9rem 3.2rem;
+  padding: 1rem 3.2rem;
   border-radius: var(--radius-md);
 }
 
@@ -490,11 +520,11 @@ header.site .nav {
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
   padding: 0.15rem 0.4rem;
-  background: var(--color-surface);
+  background: var(--color-bg);
 }
 
 /* ============================================================
-   Lists — the one repeated pattern for entries/backlinks/results
+   Lists — editorial rows (entries, backlinks, search results)
    ============================================================ */
 .list {
   list-style: none;
@@ -513,23 +543,33 @@ header.site .nav {
   text-decoration: none;
   color: inherit;
   border-radius: var(--radius-sm);
+  transition: background var(--transition);
 }
 
 .list-row > a:hover {
   background: var(--color-surface);
 }
 
-.list-row .list-row-title {
+.list-row .list-row-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: var(--text-xs);
   font-weight: 600;
-  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.list-row .list-row-title {
+  font-weight: 700;
+  font-size: var(--text-lg);
   color: var(--color-text);
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.25rem;
 }
 
 .list-row .list-row-desc {
   color: var(--color-text-muted);
   font-size: var(--text-sm);
-  margin: 0 0 0.4rem;
+  margin: 0 0 0.5rem;
   max-width: 42rem;
 }
 
@@ -541,9 +581,27 @@ header.site .nav {
   font-size: var(--text-xs);
 }
 
+.list-row .list-row-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--color-link);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.list-row .list-row-more .arrow {
+  display: inline-block;
+  transition: transform var(--transition);
+}
+
+.list-row > a:hover .list-row-more .arrow {
+  transform: translateX(3px);
+}
+
 /* ============================================================
-   Category list — homepage. A scannable index, not feature cards:
-   hairline dividers, no boxes, no shadows, no lift-on-hover.
+   Category list — homepage. Editorial navigation, not cards:
+   hairline dividers, icon, label, count, trailing arrow.
    ============================================================ */
 .category-list {
   list-style: none;
@@ -556,12 +614,13 @@ header.site .nav {
 
 .category-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-3);
   padding: var(--space-4) var(--space-3);
   text-decoration: none;
   color: inherit;
   border-bottom: 1px solid var(--color-border);
+  transition: background var(--transition);
 }
 
 .category-list li:nth-child(odd) .category-row {
@@ -573,14 +632,18 @@ header.site .nav {
 }
 
 .category-row:hover .category-row-title {
-  color: var(--color-accent);
+  color: var(--color-link);
+}
+
+.category-row:hover .category-row-arrow {
+  color: var(--color-link);
+  transform: translateX(3px);
 }
 
 .category-row .cat-icon {
   flex: none;
-  width: 22px;
-  height: 22px;
-  margin-top: 0.15rem;
+  width: 20px;
+  height: 20px;
   color: var(--color-text-muted);
 }
 
@@ -593,13 +656,7 @@ header.site .nav {
   font-weight: 600;
   font-size: var(--text-base);
   color: var(--color-text);
-}
-
-.category-row-desc {
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
-  line-height: 1.55;
-  margin-top: 0.2rem;
+  transition: color var(--transition);
 }
 
 .category-row-count {
@@ -607,7 +664,12 @@ header.site .nav {
   color: var(--color-text-faint);
   font-size: var(--text-xs);
   white-space: nowrap;
-  margin-top: 0.2rem;
+}
+
+.category-row-arrow {
+  flex: none;
+  color: var(--color-text-faint);
+  transition: color var(--transition), transform var(--transition);
 }
 
 /* ============================================================
@@ -616,13 +678,17 @@ header.site .nav {
 article .prose {
   font-size: 1.0625rem;
   line-height: 1.75;
-  color: var(--color-text-body);
+  color: var(--color-text);
 }
 
 article .prose p,
 article .prose ul,
 article .prose ol {
   margin: 0 0 1.1em;
+}
+
+article .prose a {
+  color: var(--color-link);
 }
 
 article .prose code {
@@ -666,12 +732,20 @@ footer.site .wrap {
   flex-wrap: wrap;
 }
 
+footer.site a {
+  color: var(--color-text-muted);
+}
+
+footer.site a:hover {
+  color: var(--color-link);
+}
+
 /* ============================================================
    Responsive
    ============================================================ */
 @media (max-width: 640px) {
   :root {
-    --text-3xl: 2rem;
+    --text-3xl: 1.85rem;
     --text-2xl: 1.5rem;
   }
 

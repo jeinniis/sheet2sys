@@ -2,6 +2,8 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { CATEGORIES, getCategory } from '../lib/categories.js';
+import { groupByTag } from '../lib/tags.js';
+import CategoryIcon from '../components/CategoryIcon.astro';
 
 const allEntries = await getCollection('library', ({ data }) => !data.draft);
 
@@ -13,15 +15,16 @@ const counts = allEntries.reduce((acc, entry) => {
 const recent = [...allEntries]
   .sort((a, b) => b.data.updated.valueOf() - a.data.updated.valueOf())
   .slice(0, 6);
+
+const topTags = [...groupByTag(allEntries).entries()]
+  .sort((a, b) => b[1].length - a[1].length)
+  .slice(0, 10);
 ---
 
 <BaseLayout title="sheet2sys" wide>
   <section class="section-lg">
     <h1 class="hero-title">sheet2sys</h1>
-    <p class="hero-lede">
-      คลังความรู้สาธารณะของ Jane ที่บันทึกสิ่งที่เรียนรู้จากการสร้างระบบงานจริงด้วยตัวเอง
-      โดยไม่ได้เริ่มจากการเป็นโปรแกรมเมอร์
-    </p>
+    <p class="hero-tagline">Personal knowledge library</p>
 
     <form class="search-form search-hero" action="/search/" style="margin-top: 1.75rem;">
       <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
@@ -33,7 +36,7 @@ const recent = [...allEntries]
         type="search"
         name="q"
         id="home-search"
-        placeholder="ค้นหาเรื่องที่อยากรู้ เช่น Named Range, Apps Script, Automation..."
+        placeholder="ค้นหาสิ่งที่เคยเรียนรู้ เช่น Named Range, Apps Script, Automation..."
         autocomplete="off"
       />
       <kbd class="kbd" id="home-search-kbd">⌘K</kbd>
@@ -42,18 +45,18 @@ const recent = [...allEntries]
 
   <section class="section-lg">
     <div class="section-heading">
-      <h2>หมวดหมู่</h2>
+      <h2>เรียกดูตามหมวดหมู่</h2>
     </div>
     <ul class="category-list">
       {CATEGORIES.map((c) => (
         <li>
           <a class="category-row" href={`/${c.slug}/`}>
-            <svg class="cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" set:html={c.icon} />
+            <CategoryIcon icon={c.icon} class="cat-icon" />
             <div class="category-row-body">
               <div class="category-row-title">{c.label}</div>
-              <p class="category-row-desc">{c.description}</p>
             </div>
             <span class="category-row-count">{counts[c.slug] ?? 0} ชิ้น</span>
+            <span class="category-row-arrow" aria-hidden="true">→</span>
           </a>
         </li>
       ))}
@@ -78,17 +81,28 @@ const recent = [...allEntries]
           return (
             <li class="list-row">
               <a href={`/${entry.data.category}/${slug}/`}>
+                <div class="list-row-eyebrow">{category?.label} · {updated}</div>
                 <div class="list-row-title">{entry.data.title}</div>
                 {entry.data.description && <p class="list-row-desc">{entry.data.description}</p>}
-                <div class="list-row-meta">
-                  <span>{category?.label}</span>
-                  <span>อัปเดต {updated}</span>
-                </div>
+                <span class="list-row-more"><span class="arrow">→</span> อ่านต่อ</span>
               </a>
             </li>
           );
         })}
       </ul>
+    </section>
+  )}
+
+  {topTags.length > 0 && (
+    <section class="section-lg">
+      <div class="section-heading">
+        <h2>สำรวจตามแท็ก</h2>
+      </div>
+      <div class="tag-row">
+        {topTags.map(([tag, list]) => (
+          <a class="tag-link" href={`/tags/${tag}/`}>{tag} ({list.length})</a>
+        ))}
+      </div>
     </section>
   )}
 </BaseLayout>

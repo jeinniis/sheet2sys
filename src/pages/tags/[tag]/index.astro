@@ -21,17 +21,19 @@ const entries = (await getCollection('library', ({ data }) => !data.draft))
   <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'แท็ก', href: '/tags/' }, { label: tag }]} />
   <h1>#{tag}</h1>
 
-  <ul class="list">
+  <ul class="list" style="margin-top: 1.5rem;">
     {entries.map((entry) => {
       const slug = entry.id.split('/').pop();
       const category = getCategory(entry.data.category);
+      const updated = new Intl.DateTimeFormat('th-TH', { year: 'numeric', month: 'short', day: 'numeric' }).format(
+        entry.data.updated
+      );
       return (
         <li class="list-row">
           <a href={`/${entry.data.category}/${slug}/`}>
+            <div class="list-row-eyebrow">{category?.label} · {updated}</div>
             <div class="list-row-title">{entry.data.title}</div>
-            <div class="list-row-meta">
-              <span>{category?.icon} {category?.label}</span>
-            </div>
+            {entry.data.description && <p class="list-row-desc">{entry.data.description}</p>}
           </a>
         </li>
       );

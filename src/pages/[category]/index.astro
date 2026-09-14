@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import { CATEGORIES, getCategory } from '../../lib/categories.js';
+import CategoryIcon from '../../components/CategoryIcon.astro';
 
 export async function getStaticPaths() {
   return CATEGORIES.map((c) => ({ params: { category: c.slug } }));
@@ -18,7 +19,10 @@ const entries = (await getCollection('library', ({ data }) => !data.draft))
 
 <BaseLayout title={category?.label ?? categorySlug} description={category?.description}>
   <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: category?.label ?? categorySlug }]} />
-  <h1><span aria-hidden="true">{category?.icon}</span> {category?.label}</h1>
+  <h1 style="display:flex; align-items:center; gap: var(--space-3);">
+    <CategoryIcon icon={category?.icon ?? ''} size={26} />
+    {category?.label}
+  </h1>
   <p class="lede">{category?.description}</p>
 
   {entries.length === 0 ? (
