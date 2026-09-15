@@ -1,15 +1,12 @@
 ---
 import '../styles/global.css';
-import { CATEGORIES } from '../lib/categories.js';
-import CategoryIcon from '../components/CategoryIcon.astro';
 
 interface Props {
   title: string;
   description?: string;
-  wide?: boolean;
 }
 
-const { title, description, wide = false } = Astro.props;
+const { title, description } = Astro.props;
 const pageTitle = title === 'DotStack' ? title : `${title} — DotStack`;
 
 const path = Astro.url.pathname;
@@ -36,24 +33,13 @@ const isActive = (href: string) => path === href || path.startsWith(href);
       <div class="nav">
         <a class="brand" href="/">DotStack</a>
         <div class="nav-links">
-          <details class="nav-dropdown">
-            <summary>หมวดหมู่</summary>
-            <div class="nav-dropdown-menu">
-              {CATEGORIES.map((c) => (
-                <a href={`/${c.slug}/`}>
-                  <CategoryIcon icon={c.icon} size={16} />
-                  {c.label}
-                </a>
-              ))}
-            </div>
-          </details>
-          <a href="/tags/" data-active={isActive('/tags/')}>แท็ก</a>
-          <a href="/search/" data-active={isActive('/search/')}>ค้นหา</a>
+          <a href="/notes/" data-active={isActive('/notes/')}>Notes</a>
+          <a href="/tags/" data-active={isActive('/tags/')}>Tags</a>
           <a href="/about/" data-active={isActive('/about/')}>About</a>
         </div>
       </div>
     </header>
-    <main class:list={['wrap', { 'wrap-wide': wide }]}>
+    <main class="wrap">
       <slot />
     </main>
     <footer class="site">

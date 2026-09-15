@@ -1,0 +1,29 @@
+---
+// Shared header for every internal page (Notes, Tags, Category, Search,
+// About, an article's backlinks section — anywhere that isn't the
+// homepage's own discovery layout, which composes its hero differently).
+// Structure is fixed; content is not: pass an `icon` slot for category
+// pages, skip `description`/`meta` where a page has nothing to say there.
+import Breadcrumbs from './Breadcrumbs.astro';
+
+interface Crumb {
+  label: string;
+  href?: string;
+}
+
+interface Props {
+  title: string;
+  description?: string;
+  meta?: string;
+  breadcrumbs?: Crumb[];
+}
+
+const { title, description, meta, breadcrumbs } = Astro.props;
+---
+
+{breadcrumbs && <Breadcrumbs items={breadcrumbs} />}
+<div class="page-header">
+  <h1><slot name="icon" />{title}</h1>
+  {description && <p class="lede">{description}</p>}
+  {meta && <p class="page-header-meta">{meta}</p>}
+</div>

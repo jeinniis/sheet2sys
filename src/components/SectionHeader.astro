@@ -1,0 +1,18 @@
+---
+// The small uppercase label used above every homepage section (and
+// anywhere else a section needs a heading + optional trailing link).
+// Deliberately plain: the content decides the section's visual weight,
+// not this wrapper.
+interface Props {
+  label: string;
+  href?: string;
+  linkText?: string;
+}
+
+const { label, href, linkText } = Astro.props;
+---
+
+<div class="section-heading">
+  <h2>{label}</h2>
+  {href && <a href={href}>{linkText}</a>}
+</div>

@@ -1,0 +1,47 @@
+---
+// One row implementation for every entry list on the site (Latest
+// Knowledge, Notes, Tags, Category, EntryLayout backlinks). Callers supply
+// data and pick which optional parts they need; the wrapping <ul> decides
+// the visual variant via the existing `.list` / `.list-featured` classes —
+// this component's own markup never changes shape between them.
+interface Props {
+  href: string;
+  title: string;
+  eyebrow?: string;
+  description?: string;
+  badge?: string;
+  metaText?: string;
+  tags?: string[];
+  arrow?: boolean;
+}
+
+const { href, title, eyebrow, description, badge, metaText, tags = [], arrow = false } = Astro.props;
+const hasMeta = Boolean(badge || metaText);
+const hasFooter = tags.length > 0 || arrow;
+---
+
+<li class="list-row">
+  <a href={href}>
+    {eyebrow && <div class="list-row-eyebrow">{eyebrow}</div>}
+    <div class="list-row-title">{title}</div>
+    {description && <p class="list-row-desc">{description}</p>}
+    {hasMeta && (
+      <div class="list-row-meta">
+        {badge && <span class="badge badge-accent">{badge}</span>}
+        {metaText && <span>{metaText}</span>}
+      </div>
+    )}
+    {hasFooter && (
+      <div class="list-row-footer">
+        {tags.length > 0 && (
+          <span class="list-row-tags">
+            {tags.slice(0, 3).map((tag) => (
+              <span class="list-row-tag">#{tag}</span>
+            ))}
+          </span>
+        )}
+        {arrow && <span class="list-row-arrow" aria-hidden="true">→</span>}
+      </div>
+    )}
+  </a>
+</li>

@@ -1,9 +1,11 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import ArticleItem from '../../components/ArticleItem.astro';
 import { CATEGORIES, getCategory } from '../../lib/categories.js';
 import CategoryIcon from '../../components/CategoryIcon.astro';
+import { formatUpdated, entryUrl } from '../../lib/format.js';
 
 export async function getStaticPaths() {
   return CATEGORIES.map((c) => ({ params: { category: c.slug } }));
@@ -18,34 +20,27 @@ const entries = (await getCollection('library', ({ data }) => !data.draft))
 ---
 
 <BaseLayout title={category?.label ?? categorySlug} description={category?.description}>
-  <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: category?.label ?? categorySlug }]} />
-  <h1 style="display:flex; align-items:center; gap: var(--space-3);">
-    <CategoryIcon icon={category?.icon ?? ''} size={26} />
-    {category?.label}
-  </h1>
-  <p class="lede">{category?.description}</p>
+  <PageHeader
+    title={category?.label ?? categorySlug}
+    description={category?.description}
+    meta={`${entries.length} notes`}
+    breadcrumbs={[{ label: 'Home', href: '/' }, { label: category?.label ?? categorySlug }]}
+  >
+    <CategoryIcon slot="icon" icon={category?.icon ?? ''} size={28} />
+  </PageHeader>
 
   {entries.length === 0 ? (
     <p class="empty-state">ยังไม่มีของในหมวดนี้</p>
   ) : (
-    <ul class="list" style="margin-top: 1.5rem;">
-      {entries.map((entry) => {
-        const slug = entry.id.split('/').pop();
-        const updated = new Intl.DateTimeFormat('th-TH', { year: 'numeric', month: 'short', day: 'numeric' }).format(
-          entry.data.updated
-        );
-        return (
-          <li class="list-row">
-            <a href={`/${categorySlug}/${slug}/`}>
-              <div class="list-row-title">{entry.data.title}</div>
-              <div class="list-row-meta">
-                {entry.data.type === 'case' && <span class="badge badge-accent">Case</span>}
-                <span>อัปเดต {updated}</span>
-              </div>
-            </a>
-          </li>
-        );
-      })}
+    <ul class="list">
+      {entries.map((entry) => (
+        <ArticleItem
+          href={entryUrl(entry)}
+          title={entry.data.title}
+          badge={entry.data.type === 'case' ? 'Case' : undefined}
+          metaText={`อัปเดต ${formatUpdated(entry.data.updated)}`}
+        />
+      ))}
     </ul>
   )}
 </BaseLayout>

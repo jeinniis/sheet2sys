@@ -17,10 +17,22 @@ function walk(dir) {
     .map((f) => path.join(dir, f));
 }
 
+// Thai has no spaces between words, so a whitespace word-count badly
+// undercounts Thai-heavy pieces. Counting non-whitespace characters and
+// dividing by a combined-script reading rate is rougher but stays sane
+// for both scripts without pulling in a real segmenter.
+const CHARS_PER_MINUTE = 500;
+
+function estimateReadingMinutes(content) {
+  const chars = content.replace(/\s+/g, '').length;
+  return Math.max(1, Math.round(chars / CHARS_PER_MINUTE));
+}
+
 function buildIndex() {
   const files = walk(CONTENT_DIR);
   const bySlug = new Map();
   const rawBySlug = new Map();
+  const readingMinutesBySlug = new Map();
 
   for (const file of files) {
     const source = fs.readFileSync(file, 'utf-8');
@@ -34,6 +46,7 @@ function buildIndex() {
       url: `/${data.category}/${slug}/`,
     });
     rawBySlug.set(slug, content);
+    readingMinutesBySlug.set(slug, estimateReadingMinutes(content));
   }
 
   const backlinks = new Map();
@@ -55,7 +68,7 @@ function buildIndex() {
     }
   }
 
-  return { bySlug, backlinks };
+  return { bySlug, backlinks, readingMinutesBySlug };
 }
 
 let cached = null;
@@ -75,4 +88,8 @@ export function resolveLink(targetSlug) {
 
 export function getBacklinks(slug) {
   return getGraph().backlinks.get(slug) ?? [];
+}
+
+export function getReadingMinutes(slug) {
+  return getGraph().readingMinutesBySlug.get(slug) ?? 1;
 }

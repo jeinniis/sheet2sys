@@ -28,13 +28,16 @@
   --color-border-strong: #3c3f42;
 
   --color-text: var(--white);
+  /* Secondary text is content the reader needs — descriptions, ledes,
+     hero copy. Keep it clearly legible, not just "not black". */
+  --color-text-secondary: #b5b8ba;
   --color-text-muted: var(--gray);
   --color-text-faint: #6b6f73;
 
   /* Blue at brand strength (#4263EB) is only ~3.5:1 on Graphite — short of
      AA for text. Use the brand blue for larger/non-text accents; use this
      lightened tint (~4.7:1) for actual link/tag text. */
-  --color-link: #6c86f7;
+  --color-link: #6f87ff;
   --color-link-strong: var(--blue);
 
   --color-accent: var(--yellow);
@@ -50,15 +53,32 @@
   --space-7: 3rem;
   --space-8: 4rem;
   --space-9: 5rem;
+  --space-10: 6rem;
 
-  /* Type scale — hero kept modest on purpose (no huge marketing type) */
+  /* Type scale, mapped to levels rather than one-off literals:
+       --text-3xl  Page title / Display   (36-42px)
+       --text-xl   Featured content title (18-22px, upper end)
+       --text-title Content/article title (18-22px)
+       --text-lg   Body — larger (leads, descriptions)
+       --text-base Body                   (16-18px)
+       --text-sm   Small / nav / labels   (14-15px)
+       --text-xs   Metadata               (12-14px)
+     Section-heading labels intentionally stay a small uppercase kicker
+     (--text-sm + letter-spacing) rather than the 20-24px "section heading"
+     literally suggested elsewhere — an editorial choice already settled
+     for this site, not an oversight. */
   --text-xs: 0.8125rem;
-  --text-sm: 0.9rem;
+  --text-sm: 0.9375rem;
   --text-base: 1rem;
   --text-lg: 1.125rem;
+  --text-title: 1.25rem;
   --text-xl: 1.375rem;
   --text-2xl: 1.75rem;
-  --text-3xl: 2.125rem;
+  --text-3xl: 2.5rem;
+  /* Long-form article body — its own named level per the brief's "Body:
+     16-18px, long-form should prioritize readability", slightly larger
+     than the site's general --text-base. */
+  --text-article: 1.0625rem;
 
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -99,8 +119,12 @@ h3 {
   margin: 0 0 var(--space-3);
 }
 
+/* One "page title" level for the whole site (36-42px desktop) — every
+   page's <h1> shares this, including the article page's own title, which
+   IS that page's title. List-item titles use --text-title instead; they're
+   a different, smaller level (see ArticleItem / .list-row-title). */
 h1 {
-  font-size: var(--text-2xl);
+  font-size: var(--text-3xl);
 }
 
 h2 {
@@ -133,27 +157,20 @@ summary:focus-visible {
 /* ============================================================
    Layout
    ============================================================ */
+/* One page width for every page, always — including the header (below).
+   Individual content types narrow themselves with an INNER wrapper
+   (.content-narrow) instead of changing this outer container, so the
+   header and page edges never shift when you navigate between pages. */
 .wrap {
-  max-width: var(--content-width);
+  max-width: var(--page-width);
   margin: 0 auto;
   padding: var(--space-6) var(--space-4) var(--space-8);
 }
 
-.wrap-wide {
-  max-width: var(--page-width);
-}
-
-.section {
-  margin-top: var(--space-7);
-}
-
-.section:first-child {
-  margin-top: 0;
-}
-
-.section-divided {
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--color-border);
+/* Reading column for long-form text — article body, About — nested
+   inside the same-width page rather than shrinking the whole page. */
+.content-narrow {
+  max-width: var(--content-width);
 }
 
 .section-lg {
@@ -202,8 +219,10 @@ header.site {
   z-index: 10;
 }
 
+/* Same max-width as .wrap, always — the header must never change size
+   between pages ("navigation stays consistent across all pages"). */
 header.site .nav {
-  max-width: var(--content-width);
+  max-width: var(--page-width);
   margin: 0 auto;
   padding: var(--space-4);
   display: flex;
@@ -253,65 +272,6 @@ header.site .nav {
   background: var(--color-accent);
 }
 
-.nav-dropdown {
-  position: relative;
-}
-
-.nav-dropdown summary {
-  list-style: none;
-  cursor: pointer;
-  color: var(--color-text-muted);
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.nav-dropdown summary::-webkit-details-marker {
-  display: none;
-}
-
-.nav-dropdown summary:hover {
-  color: var(--color-link);
-}
-
-.nav-dropdown summary::after {
-  content: '▾';
-  font-size: 0.7em;
-}
-
-.nav-dropdown[open] summary::after {
-  content: '▴';
-}
-
-.nav-dropdown-menu {
-  position: absolute;
-  top: calc(100% + var(--space-2));
-  left: 0;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-2);
-  min-width: 13rem;
-  display: flex;
-  flex-direction: column;
-}
-
-.nav-dropdown-menu a {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
-  color: var(--color-text);
-  text-decoration: none;
-  font-size: var(--text-sm);
-}
-
-.nav-dropdown-menu a:hover {
-  background: var(--color-bg);
-  color: var(--color-link);
-}
-
 /* ============================================================
    Breadcrumbs
    ============================================================ */
@@ -342,19 +302,55 @@ header.site .nav {
 }
 
 /* ============================================================
-   Hero (homepage) — a compact brand block, not a marketing hero
+   Page header — shared by every internal page (PageHeader.astro).
+   One fixed gap (48px) to whatever follows, on every page that uses
+   it — margin collapsing with the last inner element (h1/.lede/
+   .page-header-meta, whichever is present) keeps it exactly 48px
+   regardless of which optional parts a given page renders, so no page
+   needs its own margin-top hack on the content that follows.
+   ============================================================ */
+.page-header {
+  margin-bottom: var(--space-7);
+}
+
+.page-header h1 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.page-header-meta {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  margin: var(--space-2) 0 0;
+}
+
+/* ============================================================
+   Hero (homepage) — a compact brand block, not a marketing hero.
+   Size comes from the shared h1 rule; this only adds the brand color,
+   reserved for the wordmark itself, not page titles in general.
    ============================================================ */
 .hero-title {
-  font-size: var(--text-3xl);
   letter-spacing: -0.01em;
   color: var(--color-accent);
   margin-bottom: var(--space-2);
 }
 
-.hero-tagline {
-  color: var(--color-text-muted);
-  font-size: var(--text-base);
-  margin-bottom: 0;
+.hero-description {
+  color: var(--color-text-secondary);
+  font-size: var(--text-lg);
+  max-width: 34rem;
+  margin-bottom: var(--space-5);
+}
+
+/* Quick topics — compact chips right under search, for "I roughly know
+   what I want". Deliberately understated: reuses .badge rather than a
+   card so it doesn't compete with search or Featured Knowledge. */
+.quick-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
 }
 
 /* ============================================================
@@ -513,6 +509,35 @@ header.site .nav {
   transform: translateY(-50%);
 }
 
+/* Homepage hero search only — the main entry point to the library,
+   sized up and given more contrast so it reads as the primary action. */
+.search-hero-lg {
+  max-width: 44rem;
+}
+
+.search-hero-lg .input {
+  height: 56px;
+  padding: 0 3.4rem;
+  font-size: 1.0625rem;
+  background: #24272a;
+  border-color: var(--color-border-strong);
+}
+
+.search-hero-lg .input:focus {
+  border-color: var(--color-text-secondary);
+}
+
+/* SearchField variants used on /search/, where the field sits next to a
+   "clear" button and has no ⌘K kbd taking up right-padding. */
+.search-hero-fill {
+  flex: 1;
+  max-width: none;
+}
+
+.search-hero-no-kbd .input {
+  padding-right: 0.9rem;
+}
+
 .kbd {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: var(--text-xs);
@@ -581,22 +606,173 @@ header.site .nav {
   font-size: var(--text-xs);
 }
 
-.list-row .list-row-more {
+/* ============================================================
+   Latest Knowledge — homepage only. This is the visual center of
+   the page, so it drops the shared list's hairlines in favor of
+   generous whitespace, and treats the whole row as one click target
+   that reveals its arrow on hover rather than showing a permanent
+   "read more" link.
+   ============================================================ */
+.list-featured {
+  border-top: none;
+}
+
+.list-featured .list-row {
+  border-bottom: none;
+  margin-bottom: var(--space-7);
+}
+
+.list-featured .list-row:last-child {
+  margin-bottom: 0;
+}
+
+.list-featured .list-row > a {
+  padding: 0;
+  border-radius: 0;
+}
+
+.list-featured .list-row > a:hover {
+  background: none;
+}
+
+.list-featured .list-row-title {
+  font-size: var(--text-title);
+  color: var(--color-text);
+}
+
+.list-featured .list-row > a:hover .list-row-title {
+  color: var(--color-accent);
+}
+
+.list-featured .list-row-desc {
+  color: var(--color-text-secondary);
+  font-size: var(--text-base);
+}
+
+.list-featured .list-row-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.list-featured .list-row-tags {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.list-featured .list-row-tag {
+  color: var(--color-link);
+  font-size: var(--text-xs);
+}
+
+.list-featured .list-row-arrow {
+  color: var(--color-text);
+  font-weight: 600;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity var(--transition), transform var(--transition);
+}
+
+.list-featured .list-row > a:hover .list-row-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.see-all {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.35rem;
+  margin-top: var(--space-5);
   color: var(--color-link);
   font-size: var(--text-sm);
   font-weight: 600;
+  text-decoration: none;
 }
 
-.list-row .list-row-more .arrow {
-  display: inline-block;
-  transition: transform var(--transition);
+.see-all:hover {
+  text-decoration: underline;
 }
 
-.list-row > a:hover .list-row-more .arrow {
-  transform: translateX(3px);
+/* ============================================================
+   Featured Knowledge — homepage only. The one list on the page
+   allowed to look "curated": a numbered editorial rail with more
+   typographic weight than the plain lists below it. Still no cards —
+   whitespace and a hairline between entries do the separating.
+   ============================================================ */
+.featured-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.featured-row {
+  display: flex;
+  gap: var(--space-5);
+  padding: var(--space-5) 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.featured-list li:not(:first-child) .featured-row {
+  border-top: 1px solid var(--color-border);
+}
+
+.featured-num {
+  flex: none;
+  width: 2.25rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-faint);
+}
+
+.featured-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.featured-title {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--space-2);
+  transition: color var(--transition);
+}
+
+.featured-row:hover .featured-title {
+  color: var(--color-accent);
+}
+
+.featured-desc {
+  color: var(--color-text-secondary);
+  font-size: var(--text-base);
+  max-width: 42rem;
+  margin: 0 0 var(--space-3);
+}
+
+.featured-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.featured-arrow {
+  color: var(--color-text);
+  font-weight: 600;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity var(--transition), transform var(--transition);
+}
+
+.featured-row:hover .featured-arrow {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 /* ============================================================
@@ -615,8 +791,8 @@ header.site .nav {
 .category-row {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-4) var(--space-3);
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-4);
   text-decoration: none;
   color: inherit;
   border-bottom: 1px solid var(--color-border);
@@ -631,20 +807,20 @@ header.site .nav {
   background: var(--color-surface);
 }
 
+/* Yellow = identity/discovery: this is the moment a topic gets "found". */
 .category-row:hover .category-row-title {
-  color: var(--color-link);
+  color: var(--color-accent);
 }
 
 .category-row:hover .category-row-arrow {
-  color: var(--color-link);
-  transform: translateX(3px);
+  transform: translateX(4px);
 }
 
 .category-row .cat-icon {
   flex: none;
-  width: 20px;
-  height: 20px;
-  color: var(--color-text-muted);
+  width: 22px;
+  height: 22px;
+  color: var(--color-text-secondary);
 }
 
 .category-row-body {
@@ -654,15 +830,15 @@ header.site .nav {
 
 .category-row-title {
   font-weight: 600;
-  font-size: var(--text-base);
+  font-size: var(--text-lg);
   color: var(--color-text);
   transition: color var(--transition);
 }
 
 .category-row-count {
   flex: none;
-  color: var(--color-text-faint);
-  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
   white-space: nowrap;
 }
 
@@ -676,7 +852,7 @@ header.site .nav {
    Article content
    ============================================================ */
 article .prose {
-  font-size: 1.0625rem;
+  font-size: var(--text-article);
   line-height: 1.75;
   color: var(--color-text);
 }
@@ -713,6 +889,33 @@ article .prose pre code {
   padding: 0;
 }
 
+article .prose img,
+article .prose svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1.5em 0;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+/* Caption convention: a paragraph that's just *italic text* (e.g. right
+   under an image) renders small and muted, like a figure caption — no
+   special markup needed beyond plain Markdown emphasis. */
+article .prose p > em:only-child {
+  display: block;
+  margin-top: -0.75em;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+article .prose blockquote {
+  margin: 0 0 1.1em;
+  padding-left: var(--space-4);
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-text-secondary);
+}
+
 /* ============================================================
    Footer
    ============================================================ */
@@ -745,8 +948,7 @@ footer.site a:hover {
    ============================================================ */
 @media (max-width: 640px) {
   :root {
-    --text-3xl: 1.85rem;
-    --text-2xl: 1.5rem;
+    --text-3xl: 2rem;
   }
 
   header.site .nav {
@@ -766,11 +968,24 @@ footer.site a:hover {
     display: none;
   }
 
+  .search-hero-lg .input {
+    height: 52px;
+    padding: 0 2.6rem;
+  }
+
   .category-list {
     grid-template-columns: 1fr;
   }
 
   .category-list li:nth-child(odd) .category-row {
     border-right: none;
+  }
+
+  .list-featured .list-row {
+    margin-bottom: var(--space-6);
+  }
+
+  .list-featured .list-row-footer {
+    flex-wrap: wrap;
   }
 }

@@ -2,6 +2,8 @@
 import BaseLayout from './BaseLayout.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
 import CategoryIcon from '../components/CategoryIcon.astro';
+import ArticleItem from '../components/ArticleItem.astro';
+import SectionHeader from '../components/SectionHeader.astro';
 import { getCategory } from '../lib/categories.js';
 
 interface Props {
@@ -25,50 +27,46 @@ const updatedLabel = new Intl.DateTimeFormat('th-TH', {
 ---
 
 <BaseLayout title={data.title}>
-  <Breadcrumbs
-    items={[
-      { label: 'Home', href: '/' },
-      { label: category?.label ?? data.category, href: `/${data.category}/` },
-      { label: data.title },
-    ]}
-  />
+  <div class="content-narrow">
+    <Breadcrumbs
+      items={[
+        { label: 'Home', href: '/' },
+        { label: category?.label ?? data.category, href: `/${data.category}/` },
+        { label: data.title },
+      ]}
+    />
 
-  <article>
-    <p>
-      <a class="badge" href={`/${data.category}/`}>
-        <CategoryIcon icon={category?.icon ?? ''} size={14} />
-        {category?.label}
-      </a>
-      {data.type === 'case' && <span class="badge badge-accent">Case</span>}
-    </p>
-    <h1>{data.title}</h1>
-    <p class="meta">อัปเดตล่าสุด {updatedLabel}</p>
+    <article>
+      <p>
+        <a class="badge" href={`/${data.category}/`}>
+          <CategoryIcon icon={category?.icon ?? ''} size={14} />
+          {category?.label}
+        </a>
+        {data.type === 'case' && <span class="badge badge-accent">Case</span>}
+      </p>
+      <h1>{data.title}</h1>
+      <p class="meta">อัปเดตล่าสุด {updatedLabel}</p>
 
-    <div class="prose">
-      <slot />
-    </div>
-
-    {data.tags.length > 0 && (
-      <div class="tag-row">
-        {data.tags.map((tag) => <a class="tag-link" href={`/tags/${tag}/`}>{tag}</a>)}
+      <div class="prose">
+        <slot />
       </div>
+
+      {data.tags.length > 0 && (
+        <div class="tag-row">
+          {data.tags.map((tag) => <a class="tag-link" href={`/tags/${tag}/`}>{tag}</a>)}
+        </div>
+      )}
+    </article>
+
+    {backlinks.length > 0 && (
+      <section class="section-lg">
+        <SectionHeader label="ของที่ลิงก์มาที่นี่" />
+        <ul class="list">
+          {backlinks.map((b) => (
+            <ArticleItem href={b.url} title={b.title} />
+          ))}
+        </ul>
+      </section>
     )}
-  </article>
-
-  {backlinks.length > 0 && (
-    <section class="section section-divided">
-      <div class="section-heading">
-        <h2>ของที่ลิงก์มาที่นี่</h2>
-      </div>
-      <ul class="list">
-        {backlinks.map((b) => (
-          <li class="list-row">
-            <a href={b.url}>
-              <div class="list-row-title">{b.title}</div>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </section>
-  )}
+  </div>
 </BaseLayout>

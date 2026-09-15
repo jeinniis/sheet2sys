@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import PageHeader from '../../components/PageHeader.astro';
 import { groupByTag } from '../../lib/tags.js';
 
 const entries = await getCollection('library', ({ data }) => !data.draft);
@@ -10,14 +10,16 @@ const tags = [...byTag.entries()].sort((a, b) => b[1].length - a[1].length);
 ---
 
 <BaseLayout title="แท็กทั้งหมด" description="เรียกดูของในคลังตามแท็ก">
-  <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'แท็ก' }]} />
-  <h1>แท็กทั้งหมด</h1>
-  <p class="lede">เรียกดูของในคลังตามเครื่องมือหรือเทคนิคที่ปรากฏในเนื้อหา</p>
+  <PageHeader
+    title="แท็กทั้งหมด"
+    description="เรียกดูของในคลังตามเครื่องมือหรือเทคนิคที่ปรากฏในเนื้อหา"
+    breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'แท็ก' }]}
+  />
 
   {tags.length === 0 ? (
     <p class="empty-state">ยังไม่มีแท็กในคลัง</p>
   ) : (
-    <div class="tag-row" style="margin-top: 1.5rem;">
+    <div class="tag-row">
       {tags.map(([tag, list]) => (
         <a class="tag-link" href={`/tags/${tag}/`}>{tag} ({list.length})</a>
       ))}

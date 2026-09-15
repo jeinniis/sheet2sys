@@ -1,14 +1,18 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
 ---
 
 <BaseLayout title="About">
-  <h1>About</h1>
-  <p>
-    Jane — ผู้เขียนเพียงคนเดียวของ DotStack
-  </p>
-  <p class="meta">
-    <!-- TODO: แทนที่ด้วยประวัติจริงของ Jane -->
-    ส่วนนี้ยังเป็นเนื้อหาชั่วคราว รอ Jane เขียน bio จริง
-  </p>
+  <div class="content-narrow">
+    <PageHeader
+      title="About"
+      description="Jane — ผู้เขียนเพียงคนเดียวของ DotStack"
+      breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'About' }]}
+    />
+    <p class="meta">
+      <!-- TODO: แทนที่ด้วยประวัติจริงของ Jane -->
+      ส่วนนี้ยังเป็นเนื้อหาชั่วคราว รอ Jane เขียน bio จริง
+    </p>
+  </div>
 </BaseLayout>

@@ -3,7 +3,26 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { CATEGORIES, getCategory } from '../lib/categories.js';
 import { groupByTag } from '../lib/tags.js';
+import { getReadingMinutes } from '../lib/content-graph.js';
+import { formatUpdated, entryUrl } from '../lib/format.js';
 import CategoryIcon from '../components/CategoryIcon.astro';
+import SectionHeader from '../components/SectionHeader.astro';
+import ArticleItem from '../components/ArticleItem.astro';
+import SearchField from '../components/SearchField.astro';
+
+// Fixed entry points for "I roughly know what I'm interested in" —
+// mirrors the six categories/known tags, not derived from content, so it
+// stays stable even while the library is thin. `query` matches what
+// /search/ actually indexes (tag slugs, category labels) — see
+// search-index.json.ts.
+const QUICK_TOPICS = [
+  { label: 'Google Sheets', query: 'google-sheets' },
+  { label: 'Apps Script', query: 'apps-script' },
+  { label: 'Automation', query: 'automation' },
+  { label: 'Database', query: 'database' },
+  { label: 'Coding', query: 'coding' },
+  { label: 'AI', query: 'ai' },
+];
 
 const allEntries = await getCollection('library', ({ data }) => !data.draft);
 
@@ -12,50 +31,82 @@ const counts = allEntries.reduce((acc, entry) => {
   return acc;
 }, {});
 
-const recent = [...allEntries]
-  .sort((a, b) => b.data.updated.valueOf() - a.data.updated.valueOf())
-  .slice(0, 6);
+const byUpdatedDesc = [...allEntries].sort((a, b) => b.data.updated.valueOf() - a.data.updated.valueOf());
+
+// Featured is editorial (data.featured), topped up with the most recently
+// updated pieces so the rail is never empty while the library is young.
+const featured = [
+  ...byUpdatedDesc.filter((e) => e.data.featured),
+  ...byUpdatedDesc.filter((e) => !e.data.featured),
+].slice(0, 3);
+
+const recent = byUpdatedDesc.slice(0, 6);
 
 const topTags = [...groupByTag(allEntries).entries()]
   .sort((a, b) => b[1].length - a[1].length)
   .slice(0, 10);
 ---
 
-<BaseLayout title="DotStack" wide>
-  <section class="section-lg">
+<BaseLayout title="DotStack">
+  <section class="section-lg hero">
     <h1 class="hero-title">DotStack</h1>
-    <p class="hero-tagline">Personal knowledge library</p>
+    <p class="hero-description">คลังความรู้จากการลงมือทำ เรื่องระบบ ข้อมูล Automation, Coding และ AI</p>
 
-    <form class="search-form search-hero" action="/search/" style="margin-top: 1.75rem;">
-      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-        <circle cx="11" cy="11" r="7" />
-        <line x1="21" y1="21" x2="16.65" y2="16.65" />
-      </svg>
-      <input
-        class="input"
-        type="search"
-        name="q"
+    <form class="search-form" action="/search/">
+      <SearchField
         id="home-search"
-        placeholder="ค้นหาสิ่งที่เคยเรียนรู้ เช่น Named Range, Apps Script, Automation..."
-        autocomplete="off"
+        placeholder="ค้นหา เช่น Named Range, Apps Script, Automation..."
+        size="lg"
+        showKbd
       />
-      <kbd class="kbd" id="home-search-kbd">⌘K</kbd>
     </form>
+
+    <nav class="quick-topics" aria-label="เริ่มต้นค้นหาตามหัวข้อ">
+      {QUICK_TOPICS.map((t) => (
+        <a class="badge" href={`/search/?q=${encodeURIComponent(t.query)}`}>{t.label}</a>
+      ))}
+    </nav>
   </section>
 
+  {featured.length > 0 && (
+    <section class="section-lg">
+      <SectionHeader label="แนะนำให้อ่าน" />
+      <ul class="featured-list">
+        {featured.map((entry, i) => {
+          const category = getCategory(entry.data.category);
+          const topic = category?.label.replace(' & ', ' · ') ?? entry.data.category;
+          const minutes = getReadingMinutes(entry.id.split('/').pop());
+          return (
+            <li>
+              <a class="featured-row" href={entryUrl(entry)}>
+                <span class="featured-num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+                <div class="featured-body">
+                  <div class="featured-title">{entry.data.title}</div>
+                  {entry.data.description && <p class="featured-desc">{entry.data.description}</p>}
+                  <div class="featured-meta">
+                    <span>{topic} · {minutes} min</span>
+                    <span class="featured-arrow" aria-hidden="true">→</span>
+                  </div>
+                </div>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  )}
+
   <section class="section-lg">
-    <div class="section-heading">
-      <h2>เรียกดูตามหมวดหมู่</h2>
-    </div>
+    <SectionHeader label="เรียกดูตามหมวดหมู่" />
     <ul class="category-list">
       {CATEGORIES.map((c) => (
         <li>
           <a class="category-row" href={`/${c.slug}/`}>
-            <CategoryIcon icon={c.icon} class="cat-icon" />
+            <CategoryIcon icon={c.icon} size={22} class="cat-icon" />
             <div class="category-row-body">
               <div class="category-row-title">{c.label}</div>
             </div>
-            <span class="category-row-count">{counts[c.slug] ?? 0} ชิ้น</span>
+            <span class="category-row-count">{counts[c.slug] ?? 0} notes</span>
             <span class="category-row-arrow" aria-hidden="true">→</span>
           </a>
         </li>
@@ -65,39 +116,29 @@ const topTags = [...groupByTag(allEntries).entries()]
 
   {recent.length > 0 && (
     <section class="section-lg">
-      <div class="section-heading">
-        <h2>อัปเดตล่าสุด</h2>
-        <a href="/tags/">ดูตามแท็ก</a>
-      </div>
-      <ul class="list">
+      <SectionHeader label="อัปเดตล่าสุด" />
+      <ul class="list list-featured">
         {recent.map((entry) => {
-          const slug = entry.id.split('/').pop();
           const category = getCategory(entry.data.category);
-          const updated = new Intl.DateTimeFormat('th-TH', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-          }).format(entry.data.updated);
           return (
-            <li class="list-row">
-              <a href={`/${entry.data.category}/${slug}/`}>
-                <div class="list-row-eyebrow">{category?.label} · {updated}</div>
-                <div class="list-row-title">{entry.data.title}</div>
-                {entry.data.description && <p class="list-row-desc">{entry.data.description}</p>}
-                <span class="list-row-more"><span class="arrow">→</span> อ่านต่อ</span>
-              </a>
-            </li>
+            <ArticleItem
+              href={entryUrl(entry)}
+              title={entry.data.title}
+              eyebrow={`${category?.label} · ${formatUpdated(entry.data.updated)}`}
+              description={entry.data.description}
+              tags={entry.data.tags}
+              arrow
+            />
           );
         })}
       </ul>
+      <a class="see-all" href="/notes/">ดูทั้งหมด <span aria-hidden="true">→</span></a>
     </section>
   )}
 
   {topTags.length > 0 && (
     <section class="section-lg">
-      <div class="section-heading">
-        <h2>สำรวจตามแท็ก</h2>
-      </div>
+      <SectionHeader label="สำรวจตามแท็ก" />
       <div class="tag-row">
         {topTags.map(([tag, list]) => (
           <a class="tag-link" href={`/tags/${tag}/`}>{tag} ({list.length})</a>

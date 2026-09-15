@@ -16,6 +16,11 @@ const library = defineCollection({
     type: z.enum(['note', 'case']),
     category: z.enum(CATEGORY_SLUGS),
     tags: z.array(z.string()).default([]),
+    // Manual curation for the homepage "แนะนำให้อ่าน" (Featured Knowledge)
+    // rail — an editorial pick, not derived from views/recency. Optional so
+    // the homepage still has something to show before any piece is flagged
+    // (falls back to most-recently-updated).
+    featured: z.boolean().default(false),
     // "Updated", never "Published" — ADR 0002.
     updated: z.coerce.date(),
     // Belt-and-suspenders per ADR 0011: the real draft boundary is the
