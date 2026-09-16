@@ -1,10 +1,15 @@
 ---
 import { getCollection, render } from 'astro:content';
 import EntryLayout from '../../layouts/EntryLayout.astro';
-import { getBacklinks } from '../../lib/content-graph.js';
+import { getBacklinks, validateGraph } from '../../lib/content-graph.js';
 
 export async function getStaticPaths() {
   const entries = await getCollection('library', ({ data }) => !data.draft);
+  // Validate the whole link graph (duplicate slugs, broken/Draft-target
+  // wikilinks) here, in plain path-collection code, before any page
+  // renders — see the comment on validateGraph() for why it can't live
+  // inside the markdown-render path instead.
+  validateGraph();
   return entries.map((entry) => {
     const slug = entry.id.split('/').pop();
     return {

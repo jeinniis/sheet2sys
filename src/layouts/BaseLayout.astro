@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { AUTHOR } from '../lib/site.js';
 
 interface Props {
   title: string;
@@ -34,8 +35,9 @@ const isActive = (href: string) => path === href || path.startsWith(href);
         <a class="brand" href="/">DotStack</a>
         <div class="nav-links">
           <a href="/notes/" data-active={isActive('/notes/')}>Notes</a>
-          <a href="/tags/" data-active={isActive('/tags/')}>Tags</a>
-          <a href="/about/" data-active={isActive('/about/')}>About</a>
+          <a href="/cases/" data-active={isActive('/cases/')}>Cases</a>
+          <a href="/categories/" data-active={isActive('/categories/')}>Categories</a>
+          <a href="/search/" data-active={isActive('/search/')}>Search</a>
         </div>
       </div>
     </header>
@@ -44,7 +46,7 @@ const isActive = (href: string) => path === href || path.startsWith(href);
     </main>
     <footer class="site">
       <div class="wrap">
-        <span>© {new Date().getFullYear()} Jane — DotStack</span>
+        <span>© {new Date().getFullYear()} {AUTHOR} — DotStack</span>
         <a href="/about/">About</a>
       </div>
     </footer>

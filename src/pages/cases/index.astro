@@ -1,0 +1,39 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import ArticleItem from '../../components/ArticleItem.astro';
+import { getCategory } from '../../lib/categories.js';
+import { formatUpdated, entryUrl } from '../../lib/format.js';
+import { AUTHOR } from '../../lib/site.js';
+
+const entries = (await getCollection('library', ({ data }) => !data.draft && data.type === 'case')).sort(
+  (a, b) => b.data.updated.valueOf() - a.data.updated.valueOf()
+);
+---
+
+<BaseLayout title="Cases" description={`เรื่องราวระบบจริงที่ ${AUTHOR} สร้าง เรียงตามอัปเดตล่าสุด`}>
+  <PageHeader
+    title="Cases"
+    description={`ระบบจริงที่ ${AUTHOR} ลงมือสร้าง ตั้งแต่ปัญหาตั้งต้นจนถึงผลลัพธ์`}
+    breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Cases' }]}
+  />
+
+  {entries.length === 0 ? (
+    <p class="empty-state">ยังไม่มี Case ในคลัง</p>
+  ) : (
+    <ul class="list">
+      {entries.map((entry) => {
+        const category = getCategory(entry.data.category);
+        return (
+          <ArticleItem
+            href={entryUrl(entry)}
+            title={entry.data.title}
+            eyebrow={`${category?.label} · ${formatUpdated(entry.data.updated)}`}
+            description={entry.data.description}
+          />
+        );
+      })}
+    </ul>
+  )}
+</BaseLayout>

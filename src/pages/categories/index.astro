@@ -1,0 +1,41 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import CategoryIcon from '../../components/CategoryIcon.astro';
+import { CATEGORIES } from '../../lib/categories.js';
+
+const entries = await getCollection('library', ({ data }) => !data.draft);
+const counts = entries.reduce((acc, entry) => {
+  acc[entry.data.category] ??= { notes: 0, cases: 0 };
+  acc[entry.data.category][entry.data.type === 'case' ? 'cases' : 'notes'] += 1;
+  return acc;
+}, {});
+---
+
+<BaseLayout title="Categories" description="หกหมวดหมู่คงที่ที่ครอบคลุมทุกของในคลัง DotStack">
+  <PageHeader
+    title="Categories"
+    description="ทุกโน้ตและเคสอยู่ในหมวดหมู่เดียว จากหกหมวดคงที่นี้"
+    breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Categories' }]}
+  />
+
+  <ul class="category-list">
+    {CATEGORIES.map((c) => {
+      const count = counts[c.slug] ?? { notes: 0, cases: 0 };
+      return (
+        <li>
+          <a class="category-row" href={`/${c.slug}/`}>
+            <CategoryIcon icon={c.icon} size={22} class="cat-icon" />
+            <div class="category-row-body">
+              <div class="category-row-title">{c.label}</div>
+              <p class="category-row-desc">{c.description}</p>
+            </div>
+            <span class="category-row-count">{count.notes} notes · {count.cases} cases</span>
+            <span class="category-row-arrow" aria-hidden="true">→</span>
+          </a>
+        </li>
+      );
+    })}
+  </ul>
+</BaseLayout>

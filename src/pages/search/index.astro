@@ -17,7 +17,7 @@ import SearchField from '../../components/SearchField.astro';
     <button class="btn" type="button" id="search-clear">ล้าง</button>
   </form>
 
-  <p class="meta search-status" id="search-status"></p>
+  <p class="search-status" id="search-status" role="status" aria-live="polite"></p>
   <ul class="list" id="search-results"></ul>
 </BaseLayout>
 
@@ -29,67 +29,208 @@ import SearchField from '../../components/SearchField.astro';
     margin-bottom: var(--space-5);
   }
 
-  .search-status {
+  #search-status {
     margin: 0 0 var(--space-3);
   }
 </style>
 
 <script>
-  type Entry = { title: string; url: string; category: string; tags: string[] };
+  import { search, queryTerms, getResultContext } from '../../lib/search.js';
 
+  type Doc = {
+    title: string;
+    description: string;
+    body: string;
+    category: string;
+    tags: string[];
+    type: 'note' | 'case';
+    url: string;
+  };
+
+  const form = document.getElementById('search-form') as HTMLFormElement;
   const input = document.getElementById('search-input') as HTMLInputElement;
   const clearBtn = document.getElementById('search-clear') as HTMLButtonElement;
-  const status = document.getElementById('search-status') as HTMLElement;
-  const results = document.getElementById('search-results') as HTMLUListElement;
+  const statusEl = document.getElementById('search-status') as HTMLElement;
+  const resultsEl = document.getElementById('search-results') as HTMLUListElement;
 
-  const initialQuery = new URLSearchParams(location.search).get('q');
-  if (initialQuery) input.value = initialQuery;
+  // Read ?q= once on load so a search is linkable/bookmarkable (§6).
+  const initialQuery = new URLSearchParams(location.search).get('q') ?? '';
+  input.value = initialQuery;
 
-  let index: Entry[] = [];
+  let index: Doc[] | null = null;
+  let indexFailed = false;
 
-  fetch('/search-index.json')
-    .then((res) => res.json())
-    .then((data: Entry[]) => {
+  const indexPromise: Promise<Doc[]> = fetch('/search-index.json')
+    .then((res) => {
+      if (!res.ok) throw new Error(`search-index.json: ${res.status}`);
+      return res.json();
+    })
+    .then((data: Doc[]) => {
       index = data;
-      render(input.value);
+      return data;
+    })
+    .catch(() => {
+      indexFailed = true;
+      return [];
     });
 
-  function render(query: string) {
-    const q = query.trim().toLowerCase();
-    results.innerHTML = '';
+  function clearResults() {
+    resultsEl.replaceChildren();
+  }
 
-    if (!q) {
-      status.textContent = index.length > 0 ? `ทั้งหมด ${index.length} ชิ้นในคลัง` : '';
-      return;
-    }
+  function el<K extends keyof HTMLElementTagNameMap>(
+    tag: K,
+    className?: string,
+    text?: string
+  ): HTMLElementTagNameMap[K] {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
 
-    const matches = index.filter(
-      (e) =>
-        e.title.toLowerCase().includes(q) ||
-        e.tags.some((t) => t.toLowerCase().includes(q)) ||
-        e.category.toLowerCase().includes(q)
-    );
-
-    status.textContent = matches.length === 0 ? `ไม่พบผลลัพธ์สำหรับ "${query}"` : `พบ ${matches.length} รายการ`;
-
-    for (const entry of matches) {
-      const li = document.createElement('li');
-      li.className = 'list-row';
-      li.innerHTML = `<a href="${entry.url}">
-        <div class="list-row-eyebrow"></div>
-        <div class="list-row-title"></div>
-      </a>`;
-      li.querySelector('.list-row-eyebrow')!.textContent = entry.category;
-      li.querySelector('.list-row-title')!.textContent = entry.title;
-      results.appendChild(li);
+  // Builds highlighted text as real DOM nodes (a text node per plain
+  // segment, a <mark> per match) — never an HTML string — so nothing
+  // from the query or the indexed content can be interpreted as markup.
+  function appendSegments(container: HTMLElement, segments: { text: string; highlight: boolean }[]) {
+    for (const seg of segments) {
+      if (seg.highlight) {
+        container.appendChild(el('mark', 'search-highlight', seg.text));
+      } else {
+        container.appendChild(document.createTextNode(seg.text));
+      }
     }
   }
 
-  input.addEventListener('input', () => render(input.value));
+  function renderResult(doc: Doc, matchedFields: Set<string>, terms: string[]): HTMLLIElement {
+    const li = el('li', 'list-row');
+    const a = document.createElement('a');
+    a.href = doc.url;
+
+    a.appendChild(el('div', 'list-row-eyebrow', doc.category));
+    a.appendChild(el('div', 'list-row-title', doc.title));
+
+    const ctx = getResultContext(doc, terms, matchedFields);
+    if (ctx) {
+      const desc = el('p', 'list-row-desc');
+      if (ctx.prefixEllipsis) desc.appendChild(document.createTextNode('… '));
+      appendSegments(desc, ctx.segments);
+      if (ctx.suffixEllipsis) desc.appendChild(document.createTextNode(' …'));
+      a.appendChild(desc);
+    }
+
+    const showCaseMarker = doc.type === 'case';
+    const showTags = matchedFields.has('tags') && doc.tags.length > 0;
+    if (showCaseMarker || showTags) {
+      const meta = el('div', 'list-row-meta');
+      if (showCaseMarker) meta.appendChild(el('span', 'case-marker', 'Case'));
+      if (showTags) {
+        const tagsEl = el('span', 'list-row-tags');
+        for (const tag of doc.tags.slice(0, 3)) {
+          tagsEl.appendChild(el('span', 'list-row-tag', `#${tag}`));
+        }
+        meta.appendChild(tagsEl);
+      }
+      a.appendChild(meta);
+    }
+
+    li.appendChild(a);
+    return li;
+  }
+
+  function runSearch() {
+    const rawQuery = input.value;
+    const terms = queryTerms(rawQuery);
+
+    if (terms.length === 0) {
+      clearResults();
+      if (indexFailed) {
+        statusEl.textContent = 'โหลดดัชนีค้นหาไม่สำเร็จ ลองรีเฟรชหน้านี้อีกครั้ง';
+      } else if (index) {
+        statusEl.textContent = `ทั้งหมด ${index.length} ชิ้นในคลัง`;
+      } else {
+        statusEl.textContent = '';
+      }
+      return;
+    }
+
+    if (indexFailed) {
+      clearResults();
+      statusEl.textContent = 'โหลดดัชนีค้นหาไม่สำเร็จ ลองรีเฟรชหน้านี้อีกครั้ง';
+      return;
+    }
+
+    if (!index) {
+      clearResults();
+      statusEl.textContent = 'กำลังค้นหา…';
+      return;
+    }
+
+    const results = search(index, rawQuery);
+    clearResults();
+
+    if (results.length === 0) {
+      statusEl.textContent = `ไม่พบผลลัพธ์สำหรับ "${rawQuery.trim()}"`;
+      return;
+    }
+
+    statusEl.textContent = `พบ ${results.length} รายการ`;
+    for (const r of results) {
+      resultsEl.appendChild(renderResult(r.doc as Doc, r.matchedFields, terms));
+    }
+  }
+
+  // Keeps ?q= reasonably in sync without a full navigation on every
+  // keystroke (§6) — replaceState never navigates or adds history
+  // entries, the debounce just avoids calling it on every keypress.
+  let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+  function scheduleUpdate() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      const q = input.value.trim();
+      const url = new URL(location.href);
+      if (q) url.searchParams.set('q', q);
+      else url.searchParams.delete('q');
+      history.replaceState(null, '', url);
+      runSearch();
+    }, 120);
+  }
+
+  input.addEventListener('input', scheduleUpdate);
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (input.value) {
+        input.value = '';
+        scheduleUpdate();
+      } else {
+        input.blur();
+      }
+    }
+  });
+
   clearBtn.addEventListener('click', () => {
     input.value = '';
     input.focus();
-    render('');
+    scheduleUpdate();
   });
-  document.getElementById('search-form')!.addEventListener('submit', (e) => e.preventDefault());
+
+  form.addEventListener('submit', (e) => e.preventDefault());
+
+  // "/" focuses the search input from anywhere on this page, unless
+  // focus is already in an editable control (§8) — Tab navigation is
+  // left entirely to the browser's default handling.
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== '/') return;
+    const active = document.activeElement as HTMLElement | null;
+    const isEditable =
+      active &&
+      (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable);
+    if (isEditable) return;
+    e.preventDefault();
+    input.focus();
+  });
+
+  runSearch(); // handles the initial ?q= (or the empty-query state) immediately
+  indexPromise.finally(runSearch); // refresh once the index resolves either way
 </script>
